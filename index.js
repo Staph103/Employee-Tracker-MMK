@@ -1,6 +1,5 @@
 //function, commonly used for module imports in Node.js applications
 const fs = require('fs')
-const generateMarkdown = require('./utils/mdGenerator')
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 
@@ -44,6 +43,24 @@ inquirer
                 });
 
                 break;
+            case 'Add a department':
+                inquirer
+                    .prompt([
+                        {
+                            type: 'input',
+                            name: 'dept',
+                            message: 'What is the name of the department? ',
+                        },
+                    ]).then((res) => {
+                        const newDept = res.dept;
+                        db.query(`INSERT INTO departments (name) VALUES('${newDept}'); `, function (err, result) {
+                            if (err) {
+                                console.log(err);
+                            }
+                            console.log('Added ' + newDept + ' to the database');
+                            console.log(result);
+                        });
+                    })
 
             case 'View all roles':
 
@@ -54,7 +71,39 @@ inquirer
                     console.log(result);
                 })
 
-                    break;
+                break;
+
+            case 'Add a role':
+                inquirer
+                    .prompt([
+                        {
+                            type: 'input',
+                            name: 'role',
+                            message: 'What is the name of the role? ',
+                        },
+                        {
+                            type: 'input',
+                            name: 'salary',
+                            message: 'What is the salary of the role? ',
+                        },
+                        {
+                            type: 'list',
+                            name: 'dept',
+                            message: 'Which department does this role belong to? ',
+                            choices: ["Egineering","Finance","Legal","Sales"]
+                        },
+
+                    ]).then((res) => {
+                        const newRole = res.role;
+                        db.query(`INSERT INTO roles (title, department_id, salary) VALUES('${newRole}',${res.dept},${res.salary}); `, function (err, result) {
+                            if (err) {
+                                console.log(err);
+                            }
+                            console.log('Added ' + newRole + ' to the database');
+                            console.log(result);
+                        });
+                    })
+
 
             case 'View all employees':
 
@@ -70,15 +119,3 @@ inquirer
     })
 
 //creates the svg file based on data retrieved from user input
-
-db.query(`SELECT * FROM departments `, function (err, result) {
-    if (err) {
-        console.log(err);
-    }
-    console.log(result);
-});
-
-// Query database
-db.query('SELECT * FROM course_names', function (err, results) {
-    console.log(results);
-});
