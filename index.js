@@ -23,7 +23,7 @@ function menu() {
       {
         type: "list",
         name: "departments",
-        message: "Welcome to MMK LLC",
+        message: "What would you like to do ",
         choices: [
           "View all departments",
           "View all roles",
@@ -58,6 +58,14 @@ function menu() {
 
         case "View all employees":
           viewEmp();
+          break;
+
+        case "Add an employees":
+          addEmp();
+          break;
+
+        case "Update an employee role":
+          updateRole();
           break;
 
         case "QUIT":
@@ -112,7 +120,7 @@ function viewRoles() {
   );
 }
 function addRole() {
-  db.query(`SELECT id AS value, title AS name FROM roles`, (err, results) => {
+  db.query(`SELECT id AS value, name AS name FROM departments`, (err, results) => {
     // console.log(results);
     const roles = results;
 
@@ -138,8 +146,13 @@ function addRole() {
       ])
       .then((res) => {
         const newRole = res.role;
+        const salary = res.salary;
+        const dept = res.dept;
         db.query(
-          `INSERT INTO roles (title, department_id, salary) VALUES('${newRole}',${res.dept},${res.salary}); `,
+          `INSERT INTO roles (title, department_id, salary) VALUES(?,?,?); `,
+          newRole,
+          dept,
+          salary,
           function (err, result) {
             if (err) {
               console.log(err);
@@ -154,16 +167,16 @@ function addRole() {
 function viewEmp() {
   db.query(
     `SELECT employees.id, employees.first_name AS "first name", 
-    employees.last_name AS "last name", 
-    roles.title, departments.name AS department, 
-    roles.salary, 
-   concat(manager.first_name, " ", manager.last_name) AS manager
-   FROM employees
-   LEFT JOIN roles
-   ON employees.role_id = roles.id
-   LEFT JOIN departments
-   ON roles.department_id = departments.id
-   LEFT JOIN employees manager `,
+  employees.last_name AS "last name", 
+  roles.title, departments.name AS department, 
+  roles.salary, 
+  concat(manager.first_name, " ", manager.last_name) AS manager
+  FROM employees
+  LEFT JOIN roles
+  ON employees.role_id = roles.id
+  LEFT JOIN departments
+  ON roles.department_id = departments.id
+  LEFT JOIN employees manager `,
     function (err, result) {
       if (err) {
         console.log(err);
@@ -172,5 +185,51 @@ function viewEmp() {
       menu();
     }
   );
+}
+function addEmp() {
+  db.query(`SELECT id AS value, title AS name FROM roles`, (err, results) => {
+    const roles = results;
+
+    inquirer
+
+      .prompt([
+        {
+          type: "input",
+          name: "fname",
+          message: "What is the employees first name ?",
+        },
+        {
+          type: "input",
+          name: "lname",
+          message: "What is the employees last name ",
+        },
+        {
+          type: "list",
+          name: "dept",
+          message: "Whats the employees role ? ",
+          choices: roles,
+        },
+      ])
+      .then((res) => {
+        const fname = res.fname;
+        const lname = res.lname;
+        const dept = res.dept;
+        const fullName = fname + " " + lname;
+        db.query(
+          `INSERT INTO roles (title, department_id, salary) VALUES(?,?,?); `,
+          fname,
+          lname,
+          dept,
+          function (err, result) {
+            if (err) {
+              console.log(err);
+            }
+            console.table(result);
+            console.log("Added " + fullName + " to the database");
+            menu();
+          }
+        );
+      });
+  });
 }
 menu();
