@@ -205,7 +205,7 @@ function addEmp() {
         },
         {
           type: "list",
-          name: "dept",
+          name: "role",
           message: "Whats the employees role ? ",
           choices: roles,
         },
@@ -213,13 +213,13 @@ function addEmp() {
       .then((res) => {
         const fname = res.fname;
         const lname = res.lname;
-        const dept = res.dept;
+        const role = res.role;
         const fullName = fname + " " + lname;
         db.query(
-          `INSERT INTO roles (title, department_id, salary) VALUES(?,?,?); `,
+          `INSERT INTO roles (first_name, last_name, role_id) VALUES(?,?,?); `,
           fname,
           lname,
-          dept,
+          role,
           function (err, result) {
             if (err) {
               console.log(err);
