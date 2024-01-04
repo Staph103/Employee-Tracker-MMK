@@ -1,121 +1,176 @@
 //function, commonly used for module imports in Node.js applications
-const fs = require('fs')
-const inquirer = require('inquirer');
-const mysql = require('mysql2');
-
+const fs = require("fs");
+const inquirer = require("inquirer");
+const mysql = require("mysql2");
 
 // Connect to database
 const db = mysql.createConnection(
-    {
-        host: 'localhost',
-        // MySQL username,
-        user: 'root',
-        // TODO: Add MySQL password
-        password: 'rootroot',
-        database: 'directory_db'
-    },
-    console.log(`Connected to the books_db database.`)
+  {
+    host: "localhost",
+    // MySQL username,
+    user: "root",
+    // TODO: Add MySQL password
+    password: "rootroot",
+    database: "directory_db",
+  },
+  console.log(`Connected to the directory_db database.`)
 );
 
-
-inquirer
+function menu() {
+  inquirer
     .prompt([
+      // Pass your questions in here
+      {
+        type: "list",
+        name: "departments",
+        message: "Welcome to MMK LLC",
+        choices: [
+          "View all departments",
+          "View all roles",
+          "View all employees",
+          "Add a department",
+          "Add a role",
+          "Add an employee",
+          "Update an employee role",
+          "QUIT",
+        ],
+      },
+    ])
+    .then((res) => {
+      //
+      switch (res.departments) {
+        case "View all departments":
+          viewDept();
+          break;
 
-        // Pass your questions in here 
-        {
-            type: 'list',
-            name: 'departments',
-            message: 'Welcome to MMK LLC',
-            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update an employee role']
-        },
+        case "Add a department":
+          addDept();
+          break;
 
-    ]).then((res) => {
-        let newShape;
-        //
-        switch (res.choices) {
-            case 'View all departments':
+        case "View all roles":
+          viewRoles();
 
-                db.query(`SELECT * FROM departments `, function (err, result) {
-                    if (err) {
-                        console.log(err);
-                    }
-                    console.log(result);
-                });
+          break;
 
-                break;
-            case 'Add a department':
-                inquirer
-                    .prompt([
-                        {
-                            type: 'input',
-                            name: 'dept',
-                            message: 'What is the name of the department? ',
-                        },
-                    ]).then((res) => {
-                        const newDept = res.dept;
-                        db.query(`INSERT INTO departments (name) VALUES('${newDept}'); `, function (err, result) {
-                            if (err) {
-                                console.log(err);
-                            }
-                            console.log('Added ' + newDept + ' to the database');
-                            console.log(result);
-                        });
-                    })
+        case "Add a role":
+          addRole();
+          break;
 
-            case 'View all roles':
+        case "View all employees":
+          viewEmp();
+          break;
 
-                db.query(`SELECT * FROM roles `, function (err, result) {
-                    if (err) {
-                        console.log(err);
-                    }
-                    console.log(result);
-                })
-
-                break;
-
-            case 'Add a role':
-                inquirer
-                    .prompt([
-                        {
-                            type: 'input',
-                            name: 'role',
-                            message: 'What is the name of the role? ',
-                        },
-                        {
-                            type: 'input',
-                            name: 'salary',
-                            message: 'What is the salary of the role? ',
-                        },
-                        {
-                            type: 'list',
-                            name: 'dept',
-                            message: 'Which department does this role belong to? ',
-                            choices: ["Egineering","Finance","Legal","Sales"]
-                        },
-
-                    ]).then((res) => {
-                        const newRole = res.role;
-                        db.query(`INSERT INTO roles (title, department_id, salary) VALUES('${newRole}',${res.dept},${res.salary}); `, function (err, result) {
-                            if (err) {
-                                console.log(err);
-                            }
-                            console.log('Added ' + newRole + ' to the database');
-                            console.log(result);
-                        });
-                    })
-
-
-            case 'View all employees':
-
-                db.query(`SELECT * FROM employees `, function (err, result) {
-                    if (err) {
-                        console.log(err);
-                    }
-                    console.log(result);
-                })
-                break;
-
+        case "QUIT":
+          db.end();
+          break;
+      }
+    });
+}
+function viewDept() {
+  db.query(`SELECT * FROM departments `, function (err, result) {
+    if (err) {
+      console.log(err);
+    }
+    console.table(result);
+    menu();
+  });
+}
+function addDept() {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "dept",
+        message: "What is the name of the department? ",
+      },
+    ])
+    .then((res) => {
+      const newDept = res.dept;
+      db.query(
+        `INSERT INTO departments (name) VALUES(?); `,
+        [newDept],
+        function (err, result) {
+          if (err) {
+            console.log(err);
+          }
+          console.log("Added " + newDept + " to the database");
+          menu();
         }
-    })
+      );
+    });
+}
+function viewRoles() {
+  db.query(
+    `SELECT roles.id, departments.name, roles.title, roles.salary from departments JOIN roles on departments.id = roles.department_id `,
+    function (err, result) {
+      if (err) {
+        console.log(err);
+      }
+      console.table(result);
+      menu();
+    }
+  );
+}
+function addRole() {
+  db.query(`SELECT id AS value, title AS name FROM roles`, (err, results) => {
+    // console.log(results);
+    const roles = results;
 
-//creates the svg file based on data retrieved from user input
+    inquirer
+
+      .prompt([
+        {
+          type: "input",
+          name: "role",
+          message: "What is the name of the role? ",
+        },
+        {
+          type: "input",
+          name: "salary",
+          message: "What is the salary of the role? ",
+        },
+        {
+          type: "list",
+          name: "dept",
+          message: "Which department does this role belong to? ",
+          choices: roles,
+        },
+      ])
+      .then((res) => {
+        const newRole = res.role;
+        db.query(
+          `INSERT INTO roles (title, department_id, salary) VALUES('${newRole}',${res.dept},${res.salary}); `,
+          function (err, result) {
+            if (err) {
+              console.log(err);
+            }
+            console.log("Added " + newRole + " to the database");
+            menu();
+          }
+        );
+      });
+  });
+}
+function viewEmp() {
+  db.query(
+    `SELECT employees.id, employees.first_name AS "first name", 
+    employees.last_name AS "last name", 
+    roles.title, departments.name AS department, 
+    roles.salary, 
+   concat(manager.first_name, " ", manager.last_name) AS manager
+   FROM employees
+   LEFT JOIN roles
+   ON employees.role_id = roles.id
+   LEFT JOIN departments
+   ON roles.department_id = departments.id
+   LEFT JOIN employees manager `,
+    function (err, result) {
+      if (err) {
+        console.log(err);
+      }
+      console.table(result);
+      menu();
+    }
+  );
+}
+menu();
