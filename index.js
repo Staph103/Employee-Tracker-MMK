@@ -9,7 +9,7 @@ const db = mysql.createConnection(
     host: "localhost",
     // MySQL username,
     user: "root",
-    // TODO: Add MySQL password
+   
     password: "rootroot",
     database: "directory_db",
   },
@@ -37,7 +37,7 @@ function menu() {
       },
     ])
     .then((res) => {
-      //
+      //switch cases call functions for cleaner readable code
       switch (res.departments) {
         case "View all departments":
           viewDept();
@@ -73,9 +73,11 @@ function menu() {
           break;
       }
     });
+
 }
+//selects the table and renames the name to departments and shows it as a table
 function viewDept() {
-  db.query(`SELECT * FROM departments `, function (err, result) {
+  db.query(`SELECT departments.name AS Departments FROM departments `, function (err, result) {
     if (err) {
       console.log(err);
     }
@@ -83,6 +85,7 @@ function viewDept() {
     menu();
   });
 }
+//prompts user to input department to database and runs query to log input afterwards 
 function addDept() {
   inquirer
     .prompt([
@@ -109,7 +112,7 @@ function addDept() {
 }
 function viewRoles() {
   db.query(
-    `SELECT roles.id, departments.name, roles.title, roles.salary from departments JOIN roles on departments.id = roles.department_id `,
+    `SELECT departments.name AS Department, roles.title, roles.salary from departments JOIN roles on departments.id = roles.department_id `,
     function (err, result) {
       if (err) {
         console.log(err);
@@ -123,7 +126,7 @@ function addRole() {
   db.query(
     `SELECT id AS value, name AS name FROM departments`,
     (err, results) => {
-      // console.log(results);
+
       const roles = results;
 
       inquirer
@@ -152,9 +155,9 @@ function addRole() {
           const dept = res.dept;
           db.query(
             `INSERT INTO roles (title, department_id, salary) VALUES(?,?,?); `,
-            newRole,
+            [newRole,
             dept,
-            salary,
+            salary],
             function (err, result) {
               if (err) {
                 console.log(err);
@@ -167,19 +170,10 @@ function addRole() {
     }
   );
 }
+//concats the first name and last name fields and creates an alias called employees to hold the values
 function viewEmp() {
   db.query(
-    `SELECT employees.id, employees.first_name AS "first name", 
-    employees.last_name AS "last name", 
-    roles.title, departments.name AS department, 
-    roles.salary, 
-    concat(manager.first_name, " ", manager.last_name) AS manager
-    FROM employees
-    LEFT JOIN roles
-    ON employees.role_id = roles.id
-    LEFT JOIN departments
-    ON roles.department_id = departments.id
-    LEFT JOIN employees ON employees.manager_id = manger.manager_id `,
+    `SELECT CONCAT (first_name, " ", last_name) AS Employees FROM employees `,
     function (err, result) {
       if (err) {
         console.log(err);
@@ -189,48 +183,50 @@ function viewEmp() {
     }
   );
 }
-function addEmp() {
-  db.query(`SELECT id AS value, title AS name FROM roles`, (err, results) => {
-    const roles = results;
-
-    inquirer
-
-      .prompt([
+  function addEmp() {
+    db.query(`SELECT id AS value, title AS name FROM roles`, (err, results) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+  
+      const roles = results;
+      
+      inquirer.prompt([
         {
           type: "input",
           name: "fname",
-          message: "What is the employees first name ?",
+          message: "What is the employee's first name?",
         },
         {
           type: "input",
           name: "lname",
-          message: "What is the employees last name ",
+          message: "What is the employee's last name?",
         },
         {
           type: "list",
           name: "role",
-          message: "Whats the employees role ? ",
+          message: "What's the employee's role?",
           choices: roles,
         },
-      ])
-      .then((res) => {
+      ]).then((res) => {
         const fname = res.fname;
         const lname = res.lname;
-        const role = res.role;
-        const fullName = fname + " " + lname;
+        const roleId = res.role; 
+        
         db.query(
-          `INSERT INTO roles (first_name, last_name, role_id) VALUES(?,?,?); `,
-          fname,
-          lname,
-          role,
+          `INSERT INTO employees (first_name, last_name, role_id) VALUES (?, ?, ?)`,
+          [fname, lname, roleId],
           function (err, result) {
             if (err) {
-              console.log(err);
+              console.error(err);
+              return;
             }
-            console.table(result);
-            console.log("Added " + fullName + " to the database");
+            const fullName = `${fname} ${lname}`;
+            console.log(`Added ${fullName} to the database`);
             menu();
           }
+        
         );
       });
   });
@@ -240,7 +236,7 @@ function updateRole() {
     `SELECT id AS value, CONCAT(first_name, " ", last_name) AS name FROM employees`,
     (err, result) => {
       const emp = result;
-      
+
       db.query(
         `SELECT id AS value, title AS name FROM roles`,
         (err, results) => {
@@ -266,7 +262,7 @@ function updateRole() {
               const empID = res.emp;
               db.query(
                 "UPDATE employees SET role_id = ? WHERE id = ?",
-                [role, empID],
+                [empID, role],
                 function (err, result) {
                   if (err) {
                     console.log(err);
