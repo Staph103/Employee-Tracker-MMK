@@ -2,7 +2,7 @@
    employees.last_name AS "last name", 
    roles.title, departments.name AS department, 
    roles.salary, 
---    concat(manager.first_name, " ", manager.last_name) AS manager
+   concat(manager.first_name, " ", manager.last_name) AS manager
    FROM employees
    LEFT JOIN roles
    ON employees.role_id = roles.id

@@ -169,10 +169,17 @@ function addRole() {
 }
 function viewEmp() {
   db.query(
-    `SELECT employees.id, employees.first_name AS "first name",employees.last_name AS "last name",roles.title,departments.name AS department,roles.salary,CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employees
-    LEFT JOIN roles ON employees.role_id = roles.id
-    LEFT JOIN departments ON roles.department_id = departments.id
-    LEFT JOIN employees manager ON employees.manager_id = manager.id`,
+    `SELECT employees.id, employees.first_name AS "first name", 
+    employees.last_name AS "last name", 
+    roles.title, departments.name AS department, 
+    roles.salary, 
+    concat(manager.first_name, " ", manager.last_name) AS manager
+    FROM employees
+    LEFT JOIN roles
+    ON employees.role_id = roles.id
+    LEFT JOIN departments
+    ON roles.department_id = departments.id
+    LEFT JOIN employees ON employees.manager_id = manger.manager_id `,
     function (err, result) {
       if (err) {
         console.log(err);
@@ -229,55 +236,49 @@ function addEmp() {
   });
 }
 function updateRole() {
-  db.query(`SELECT id AS value, title AS name FROM roles`, (err, results) => {
-    const emp = results;
-
-    db.query(`SELECT id AS value, title AS name FROM roles`, (err, results) => {
-      const roles = results;
-
-      inquirer
-
-        .prompt([
-          {
-            type: "list",
-            name: "role",
-            message: "Which employee would you like to update ? ",
-            choices: emp,
-          },
-          {
-            type: "list",
-            name: "role",
-            message: "what role would you like to assign",
-            choices: roles,
-          },
-          {
-            type: "list",
-            name: "role",
-            message: "Whats the employees role ? ",
-            choices: roles,
-          },
-        ])
-        .then((res) => {
-          const fname = res.fname;
-          const lname = res.lname;
-          const role = res.role;
-          const fullName = fname + " " + lname;
-          db.query(
-            `INSERT INTO roles (first_name, last_name, role_id) VALUES(?,?,?); `,
-            fname,
-            lname,
-            role,
-            function (err, result) {
-              if (err) {
-                console.log(err);
-              }
-              console.table(result);
-              console.log("Added " + fullName + " to the database");
-              menu();
-            }
-          );
-        });
-    });
-  });
+  db.query(
+    `SELECT id AS value, CONCAT(first_name, " ", last_name) AS name FROM employees`,
+    (err, result) => {
+      const emp = result;
+      
+      db.query(
+        `SELECT id AS value, title AS name FROM roles`,
+        (err, results) => {
+          const roles = results;
+          inquirer
+            .prompt([
+              {
+                type: "list",
+                name: "emp",
+                message: "Which employee would you like to update ? ",
+                choices: emp,
+              },
+              {
+                type: "list",
+                name: "role",
+                message: "what role would you like to assign",
+                choices: roles,
+              },
+            ])
+            .then((res) => {
+              console.log(res);
+              const role = res.role;
+              const empID = res.emp;
+              db.query(
+                "UPDATE employees SET role_id = ? WHERE id = ?",
+                [role, empID],
+                function (err, result) {
+                  if (err) {
+                    console.log(err);
+                  }
+                  console.table(result);
+                  menu();
+                }
+              );
+            });
+        }
+      );
+    }
+  );
 }
 menu();
