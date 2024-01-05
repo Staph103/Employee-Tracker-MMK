@@ -9,7 +9,7 @@ SO THAT I can organize and plan my business
 
 # Video Link
 
-
+https://drive.google.com/file/d/104Ase2c5Fm-uOW_VAQD7Y4LDyP8Xz_0m/view
 
 
 # Assets 
