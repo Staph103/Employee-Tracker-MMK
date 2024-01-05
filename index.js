@@ -60,7 +60,7 @@ function menu() {
           viewEmp();
           break;
 
-        case "Add an employees":
+        case "Add an employee":
           addEmp();
           break;
 
@@ -120,63 +120,59 @@ function viewRoles() {
   );
 }
 function addRole() {
-  db.query(`SELECT id AS value, name AS name FROM departments`, (err, results) => {
-    // console.log(results);
-    const roles = results;
+  db.query(
+    `SELECT id AS value, name AS name FROM departments`,
+    (err, results) => {
+      // console.log(results);
+      const roles = results;
 
-    inquirer
+      inquirer
 
-      .prompt([
-        {
-          type: "input",
-          name: "role",
-          message: "What is the name of the role? ",
-        },
-        {
-          type: "input",
-          name: "salary",
-          message: "What is the salary of the role? ",
-        },
-        {
-          type: "list",
-          name: "dept",
-          message: "Which department does this role belong to? ",
-          choices: roles,
-        },
-      ])
-      .then((res) => {
-        const newRole = res.role;
-        const salary = res.salary;
-        const dept = res.dept;
-        db.query(
-          `INSERT INTO roles (title, department_id, salary) VALUES(?,?,?); `,
-          newRole,
-          dept,
-          salary,
-          function (err, result) {
-            if (err) {
-              console.log(err);
+        .prompt([
+          {
+            type: "input",
+            name: "role",
+            message: "What is the name of the role? ",
+          },
+          {
+            type: "input",
+            name: "salary",
+            message: "What is the salary of the role? ",
+          },
+          {
+            type: "list",
+            name: "dept",
+            message: "Which department does this role belong to? ",
+            choices: roles,
+          },
+        ])
+        .then((res) => {
+          const newRole = res.role;
+          const salary = res.salary;
+          const dept = res.dept;
+          db.query(
+            `INSERT INTO roles (title, department_id, salary) VALUES(?,?,?); `,
+            newRole,
+            dept,
+            salary,
+            function (err, result) {
+              if (err) {
+                console.log(err);
+              }
+              console.log("Added " + newRole + " to the database");
+              menu();
             }
-            console.log("Added " + newRole + " to the database");
-            menu();
-          }
-        );
-      });
-  });
+          );
+        });
+    }
+  );
 }
 function viewEmp() {
   db.query(
-    `SELECT employees.id, employees.first_name AS "first name", 
-  employees.last_name AS "last name", 
-  roles.title, departments.name AS department, 
-  roles.salary, 
-  concat(manager.first_name, " ", manager.last_name) AS manager
-  FROM employees
-  LEFT JOIN roles
-  ON employees.role_id = roles.id
-  LEFT JOIN departments
-  ON roles.department_id = departments.id
-  LEFT JOIN employees manager `,
+    `SELECT employees.id, employees.first_name AS "first name",employees.last_name AS "last name",roles.title,departments.name AS department,roles.salary,CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employees
+    LEFT JOIN roles ON employees.role_id = roles.id
+    LEFT JOIN departments ON roles.department_id = departments.id
+    LEFT JOIN employees manager ON employees.manager_id = manager.id`,
     function (err, result) {
       if (err) {
         console.log(err);
@@ -230,6 +226,58 @@ function addEmp() {
           }
         );
       });
+  });
+}
+function updateRole() {
+  db.query(`SELECT id AS value, title AS name FROM roles`, (err, results) => {
+    const emp = results;
+
+    db.query(`SELECT id AS value, title AS name FROM roles`, (err, results) => {
+      const roles = results;
+
+      inquirer
+
+        .prompt([
+          {
+            type: "list",
+            name: "role",
+            message: "Which employee would you like to update ? ",
+            choices: emp,
+          },
+          {
+            type: "list",
+            name: "role",
+            message: "what role would you like to assign",
+            choices: roles,
+          },
+          {
+            type: "list",
+            name: "role",
+            message: "Whats the employees role ? ",
+            choices: roles,
+          },
+        ])
+        .then((res) => {
+          const fname = res.fname;
+          const lname = res.lname;
+          const role = res.role;
+          const fullName = fname + " " + lname;
+          db.query(
+            `INSERT INTO roles (first_name, last_name, role_id) VALUES(?,?,?); `,
+            fname,
+            lname,
+            role,
+            function (err, result) {
+              if (err) {
+                console.log(err);
+              }
+              console.table(result);
+              console.log("Added " + fullName + " to the database");
+              menu();
+            }
+          );
+        });
+    });
   });
 }
 menu();
